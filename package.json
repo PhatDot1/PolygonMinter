@@ -1,0 +1,11 @@
+{
+  "name": "encodecertminter",
+  "version": "0.1.0",
+  "description": "A script that runs every x minutes. Checks the airtable for new NFTs certificates that need to be minted. Mints them and sends an email to the mintee.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "Robert Jurvanen <robert.jurvanen@gmail.com>",
+  "license": "MIT"
+}
