@@ -43,4 +43,4 @@ fetch = {
     fetchFromBase: fetchFromBase
 }
 
-module.exports = fetch;
+export default fetch;

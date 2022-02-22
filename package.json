@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node index.js"
   },
+  "type": "module",
   "author": "Robert Jurvanen <robert.jurvanen@gmail.com>",
   "license": "MIT",
   "dependencies": {

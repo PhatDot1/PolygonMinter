@@ -1,11 +1,14 @@
 let config;
 
+import dev from "./development.js";
+import prod from "./production.js";
+
 const nodeEnv = process.env.NODE_ENV || "development";
 
 if (nodeEnv === "development") {
-    config = require("./development.js");
+    config = dev;
 } else {
-    config = require("./production.js");
+    config = prod;
 }
 
-module.exports = config;
+export default config;
