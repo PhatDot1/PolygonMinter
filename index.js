@@ -1,10 +1,16 @@
 
-import config from './config/app.js';
+import 'dotenv/config'
 import cron from 'node-cron';
 import fetch from './fetch.js';
 import airtable from 'airtable';
+import ethers from 'ethers';
+import nodeFetch from 'node-fetch';
 
-const base = new airtable({apiKey: config.database.airtableApiKey}).base('appMxsw3zihH6FLoi');
+const base = new airtable({apiKey: process.env.AIRTABLE_KEY}).base('appMxsw3zihH6FLoi');
+
+const provider = new ethers.providers.InfuraProvider(process.env.NETWORK, process.env.PROJECT_ID);
+const wallet = new ethers.Wallet(process.env.DEPLOYER_KEY, provider);
+const signer = wallet.connect(provider);
 
 let isRunning = false;
 
