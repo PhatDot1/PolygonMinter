@@ -7,5 +7,9 @@
     "start": "node index.js"
   },
   "author": "Robert Jurvanen <robert.jurvanen@gmail.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "airtable": "^0.11.2",
+    "node-cron": "^3.0.0"
+  }
 }
