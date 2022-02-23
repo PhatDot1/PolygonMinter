@@ -10,6 +10,7 @@ import fs from 'fs';
 import table from './table.js';
 import print from './print.js';
 import utils from './utils.js';
+import mailer from './mailer.js'
 
 const provider = new ethers.providers.InfuraProvider(process.env.NETWORK, process.env.INFURA_PROJECT_ID);
 const wallet = new ethers.Wallet(process.env.DEPLOYER_KEY, provider);
@@ -39,6 +40,8 @@ cron.schedule('*/30 * * * * *', async () => {
             console.log('start');
             const objectToMint = mintableObjects[index];
 
+            await table.writeToBase(objectToMint, "Pending");
+
             var indexOfNFTToMint = (await nftContract.totalSupply()).toNumber();
 
             var fileNameOfNFTImage = await print.createImageForData(indexOfNFTToMint, objectToMint);
@@ -65,19 +68,25 @@ cron.schedule('*/30 * * * * *', async () => {
                 newStatus = "Error";
             }
 
-            await table.writeToBaseAfterMint(objectToMint, newStatus, indexOfNFT, etherscanLinkToTx);
+            await table.writeToBase(objectToMint, newStatus, indexOfNFT, etherscanLinkToTx);
 
+            //Email is fire and forget (you don't need to wait for the task to finish);
+            mailer.emailUserAfterMint(objectToMint.email, etherscanLinkToTx);
+                
         }
 
         console.log("Done");
         isRunning = false;
-
     }
 
 });
 
-//Kad gotov loop namjests isRunning na false da cron radi dalje
-//Pošalji mail (OAUTH za gmail) - Napravi template mail-a (pogledaj buildspace) - ovo ne moraš čekati result ja mislim
+// Napravi template mail-a (pogledaj buildspace)
+//Napravi Opeansea link - probably need to create a collection
+//Napravi open tracking za email
+//Napravi link tracking za email - awstrack.me
+
+//Clean up import to module files + put them in the helpers directory (including enums.js)
 
 //Tetiraj. Prvi test sa Ropstenom. Onda test na ropsten ali na digital ocean
 
@@ -89,6 +98,10 @@ cron.schedule('*/30 * * * * *', async () => {
 //Paziti gdje bi moglo doći do greške?!? - Error handling svuda dobar. Ako greška na status stavi greška za taj item
 
 //Achievement level - HARDCODE values which are acceptable
-//ADD pending as STATUS
 // Ipmplement dynamic description per programme
+
+//Za email staviti sliku za anthony.beaumont - drugi info da super izgleda u inbox.u
+//namijestiti oauth permission per account (da manji security risk)
+
+//Comment code verbosely 
 

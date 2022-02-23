@@ -4,18 +4,35 @@ const base = new airtable({apiKey: process.env.AIRTABLE_KEY}).base('appMxsw3zihH
 
 var table;
 
-var writeToBaseAfterMint = async (objectToMint, newStatus, indexOfNFT, etherscanLinkToTx) => {
+var writeToBase = async (objectToMint, newStatus, indexOfNFT, etherscanLinkToTx) => {
 
-    base('📜 Certificates').update([
-        {
-            "id": objectToMint.recordId,
-            "fields": {
-                "Certificate Status": newStatus,
-                "Certificate ID": `${indexOfNFT}`,
-                "Link to NFT": etherscanLinkToTx
+    var updateArray;
+
+    if (newStatus == "Success") {
+        
+        updateArray = [
+            {
+                "id": objectToMint.recordId,
+                "fields": {
+                    "Certificate Status": newStatus,
+                    "Certificate ID": `${indexOfNFT}`,
+                    "Link to NFT": etherscanLinkToTx
+                }
             }
-        }
-    ]).catch(console.error);
+        ];
+    } else {
+
+        updateArray = [
+            {
+                "id": objectToMint.recordId,
+                "fields": {
+                    "Certificate Status": newStatus
+                }
+            }
+        ];
+    }
+
+    base('📜 Certificates').update(updateArray).catch(console.error);
 
 }
 
@@ -61,7 +78,7 @@ var fetchFromBase = async () => {
 
 table = {
     fetchFromBase: fetchFromBase,
-    writeToBaseAfterMint: writeToBaseAfterMint
+    writeToBase: writeToBase
 }
 
 export default table;
