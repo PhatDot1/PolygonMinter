@@ -1,9 +1,29 @@
-let fetch;
+import airtable from 'airtable';
 
-let fetchFromBase = async (base) => {
+const base = new airtable({apiKey: process.env.AIRTABLE_KEY}).base('appMxsw3zihH6FLoi');
+
+var table;
+
+var writeToBaseAfterMint = async (objectToMint, newStatus, indexOfNFT, etherscanLinkToTx) => {
+
+    base('📜 Certificates').update([
+        {
+            "id": objectToMint.recordId,
+            "fields": {
+                "Certificate Status": newStatus,
+                "Certificate ID": `${indexOfNFT}`,
+                "Link to NFT": etherscanLinkToTx
+            }
+        }
+    ]).catch(console.error);
+
+}
+
+var fetchFromBase = async () => {
 
     var mintableObjects = [];
-    var filterFormula = "AND(({Certificate Status} = 'Ready'), ({Certificate ID} = ''),(NOT({ETH address (from ☃️ People)}) = ''))";
+    
+    var filterFormula = "AND(({Certificate Status} = 'Ready'), ({Certificate ID} = ''), ({Link to NFT} = ''), (NOT({ETH address (from ☃️ People)}) = ''))";
 
     await base('📜 Certificates').select({
         view: "Grid view",
@@ -39,8 +59,9 @@ let fetchFromBase = async (base) => {
 };
 
 
-fetch = {
-    fetchFromBase: fetchFromBase
+table = {
+    fetchFromBase: fetchFromBase,
+    writeToBaseAfterMint: writeToBaseAfterMint
 }
 
-export default fetch;
+export default table;

@@ -1,68 +1,94 @@
+
 import 'dotenv/config'
 import cron from 'node-cron';
-import fetch from './fetch.js';
-import airtable from 'airtable';
 import ethers from 'ethers';
 import nodeFetch from 'node-fetch';
+import pinataSDK from '@pinata/sdk';
 
-const base = new airtable({apiKey: process.env.AIRTABLE_KEY}).base('appMxsw3zihH6FLoi');
+import fs from 'fs';
 
-const provider = new ethers.providers.InfuraProvider(process.env.NETWORK, process.env.PROJECT_ID);
+import table from './table.js';
+import print from './print.js';
+import utils from './utils.js';
+
+const provider = new ethers.providers.InfuraProvider(process.env.NETWORK, process.env.INFURA_PROJECT_ID);
 const wallet = new ethers.Wallet(process.env.DEPLOYER_KEY, provider);
 const signer = wallet.connect(provider);
 
-let etherscanUrl = 'https://api-ropsten.etherscan.io/api?module=contract&action=getabi&address=0x82c51047e293aF3242863aA9D5678731370A10b7&apikey=Z4MUF2AW7HZ8Z144R8T7FBEJ9BR9QM47KV';
+const etherscanUrl = `${process.env.ETHERSCAN_ENDPOINT}/api?module=contract&action=getabi&address=${process.env.NFT_CONTRACT_ADDRESS}&apikey=${process.env.ETHERSCAN_KEY}`;
 
-var response = await nodeFetch(etherscanUrl);
-var abiForContract = (await response.json()).result;
+const etherscanResponse = await nodeFetch(etherscanUrl);
+const abiForContract = (await etherscanResponse.json()).result;
 
-const nftContract = new ethers.Contract('0x82c51047e293aF3242863aA9D5678731370A10b7', abiForContract, signer);
+const nftContract = new ethers.Contract(process.env.NFT_CONTRACT_ADDRESS, abiForContract, signer);
 
-let tx = await nftContract.tokenURI(0);
-console.log(tx);
+const pinata = pinataSDK(process.env.PINATA_KEY, process.env.PINATA_SECRET);
 
-let isRunning = false;
+var isRunning = false;
 
-var task = cron.schedule('*/5 * * * * *', async () => {
+cron.schedule('*/30 * * * * *', async () => {
 
     console.log('Running a task every X seconds');
 
     if (isRunning === false) {
         isRunning = true;
 
-        var mintableObjects = await fetch.fetchFromBase(base);
-        console.log(mintableObjects);
+        var mintableObjects = await table.fetchFromBase();
 
-        mintableObjects.forEach(objectToMint => {
+        for (let index = 0; index < mintableObjects.length; index++) {
+            console.log('start');
+            const objectToMint = mintableObjects[index];
 
-            console.log('hola');
-                
-        });
-        
-        //Loop-aj kroz mintable object i za svaki:
-        //Pročitaj zadnji broj minta-a sa blockchain-a (da znaš koji će biti ID)
-        //Napravi sliku (Dolje lijev ime programa, Sredina level, dolje desno id) - Matko da napravi sliku
-        //Uploadaj sliku na pinatu
-        //Napravi json file
-        //Uploadaj json file na pinatu
-        //Mintaj NFT
-        //Zapiši nazad u airtable da je mintano (Status + id)
-        //Pošalji mail (OAUTH za gmail) - Napravi template mail-a (pogledaj buildspace)
-        //Kad gotov loop namjests isRunning na false da cron radi dalje
+            var indexOfNFTToMint = (await nftContract.totalSupply()).toNumber();
 
-        //Paziti gdje bi moglo doći do greške?!? - Error handling svuda dobar. Ako greška na status stavi greška za taj item
+            var fileNameOfNFTImage = await print.createImageForData(indexOfNFTToMint, objectToMint);
 
-        //Tetiraj. Prvi test sa Ropstenom. Onda test na ropsten ali na digital ocean
+            const readableStreamForFile = fs.createReadStream(fileNameOfNFTImage);
+            var ipfsHashImage = (await pinata.pinFileToIPFS(readableStreamForFile)).IpfsHash;
 
-        //Prije nego ide live uploadaj novi contract na polygon i testiraj s njim. (tek onda pravi). Prvi test sa Ropstenom
-        //Napravi novu development adresu za polygon
-        //Napravi nove apikey za sve (plati)
+            fs.unlinkSync(fileNameOfNFTImage);
 
-        console.log('should only run once until full mint process is done');
+            var jsonBody = await utils.createJsonforData(indexOfNFTToMint, objectToMint, ipfsHashImage);
+            const options = {pinataMetadata: {name: `Encode Certificate #${indexOfNFTToMint}`}};
+            var ipfsHashJson = (await pinata.pinJSONToIPFS(jsonBody, options)).IpfsHash;
+
+            let transactionResponse = await nftContract.safeMint(objectToMint.ethAddress, `https://gateway.pinata.cloud/ipfs/${ipfsHashJson}`);
+            var transcationReceipt = await transactionResponse.wait();
+
+            var indexOfNFT = parseInt(transcationReceipt.logs[0].topics[3], 16);
+            var transactionHash = transcationReceipt.logs[0].transactionHash;
+
+            var newStatus = "Success";
+            var etherscanLinkToTx = `${process.env.ETHERSCAN_DOMAIN}/tx/${transactionHash}`;
+
+            if (indexOfNFT != indexOfNFTToMint) {
+                newStatus = "Error";
+            }
+
+            await table.writeToBaseAfterMint(objectToMint, newStatus, indexOfNFT, etherscanLinkToTx);
+
+        }
+
+        console.log("Done");
+        isRunning = false;
 
     }
 
 });
 
+//Kad gotov loop namjests isRunning na false da cron radi dalje
+//Pošalji mail (OAUTH za gmail) - Napravi template mail-a (pogledaj buildspace) - ovo ne moraš čekati result ja mislim
 
+//Tetiraj. Prvi test sa Ropstenom. Onda test na ropsten ali na digital ocean
+
+//Prije nego ide live uploadaj novi contract na polygon i testiraj s njim. (tek onda pravi).
+//Napravi novu development adresu za polygon
+//Napravi nove apikey za sve (plati novom revolut)
+
+//ERROR HANDLING. Ggdje god je upload or download ili neki internet kontakt pretpostavi da može fail-ati. Testiraj sve. Npr airtable, etherscan, infura, pinata, file write and read, MINTING the NFT
+//Paziti gdje bi moglo doći do greške?!? - Error handling svuda dobar. Ako greška na status stavi greška za taj item
+
+//Achievement level - HARDCODE values which are acceptable
+//ADD pending as STATUS
+// Ipmplement dynamic description per programme
 
