@@ -1,13 +1,13 @@
 const screen_positions = Object.freeze({
-    TopLeft: 0,
-    TopMiddle: 1,
-    TopRight: 2,
-    MiddleLeft: 3,
+    LeftTop: 0,
+    MiddleTop: 1,
+    RightTop: 2,
+    LeftMiddle: 3,
     MiddleMiddle: 4,
-    MiddleRight: 5,
-    BottomLeft: 6,
-    BottomMiddle: 7,
-    BottomRight: 8
+    RightMiddle: 5,
+    LeftBottom: 6,
+    MiddleBottom: 7,
+    RightBottom: 8
 });
 
 export default screen_positions;

@@ -9,12 +9,14 @@ var createImageForData = async (indexOfNFTToMint, objectToMint) => {
         console.log('Skipping - Data for image creation incorrect or incomplete');
     }
 
-    var smallFont = await jimp.loadFont('./assets/M27oMdHwFp9I5kia9fEvG26N.ttf.fnt');
-    var bigFont = await jimp.loadFont('./assets/PV_DFB_5AyqkSVneW96xSWkz.ttf.fnt');
+    var smallFont = await jimp.loadFont('./assets/Montserrat-SemiBold.fnt');
+    var bigFont = await jimp.loadFont('./assets/Montserrat-Regular.fnt');
 
-    await printTextAtPosition(smallFont, objectToMint.programmeName, imageTemplate, screen_positions.BottomLeft);
-    await printTextAtPosition(bigFont, objectToMint.achievementLevel, imageTemplate, screen_positions.MiddleMiddle);
-    await printTextAtPosition(smallFont, `# ${indexOfNFTToMint}`, imageTemplate, screen_positions.BottomRight);
+    var margin = 80;
+
+    await printTextAtPosition(smallFont, objectToMint.programmeName.toUpperCase(), imageTemplate, screen_positions.LeftBottom, margin, imageTemplate.bitmap.width / 2, 0, 0);
+    await printTextAtPosition(bigFont, objectToMint.achievementLevel.toUpperCase(), imageTemplate, screen_positions.LeftMiddle, margin, imageTemplate.bitmap.width, 0, margin * 3.5);
+    await printTextAtPosition(smallFont, `# ${indexOfNFTToMint}`, imageTemplate, screen_positions.RightBottom, margin, imageTemplate.bitmap.width / 2, 0, 0);
 
     var fileNameOfNFTImage = `NFT_to_pin${indexOfNFTToMint}.jpg`;
 
@@ -23,58 +25,58 @@ var createImageForData = async (indexOfNFTToMint, objectToMint) => {
     return fileNameOfNFTImage;
 }
 
-function printTextAtPosition(font, text, image, position) {
+function printTextAtPosition(font, text, image, position, margin, maxWidth, xOffset, yOffset) {
     
     var messageWidth = jimp.measureText(font, text);
-    var messageHeight = jimp.measureTextHeight(font, text, image.bitmap.width);
+    var messageHeight = jimp.measureTextHeight(font, text, maxWidth);
 
     var positionX;
     var positionY;
 
     switch (position) {
-        case screen_positions.TopLeft:
-            positionX = 0;
-            positionY = 0;
+        case screen_positions.LeftTop:
+            positionX = 0 + margin + xOffset;
+            positionY = 0 + margin + yOffset;
             break;
 
-        case screen_positions.TopMiddle:
-            positionX = image.bitmap.width / 2 - messageWidth / 2;
-            positionY = 0;
+        case screen_positions.MiddleTop:
+            positionX = image.bitmap.width / 2 - messageWidth / 2 + xOffset;
+            positionY = 0 + margin + yOffset;
             break;
 
-        case screen_positions.TopRight:
-            positionX = image.bitmap.width - messageWidth;
-            positionY = 0;
+        case screen_positions.RightTop:
+            positionX = image.bitmap.width - messageWidth - margin + xOffset;
+            positionY = 0 + margin + yOffset;
             break;
 
-        case screen_positions.MiddleLeft:
-            positionX = 0;
-            positionY = image.bitmap.height / 2 - messageHeight / 2;
+        case screen_positions.LeftMiddle:
+            positionX = 0 + margin + xOffset;
+            positionY = image.bitmap.height / 2 - messageHeight / 2 + yOffset;
             break;
     
         case screen_positions.MiddleMiddle:
-            positionX = image.bitmap.width / 2 - messageWidth / 2;
-            positionY = image.bitmap.height / 2 - messageHeight / 2;
+            positionX = image.bitmap.width / 2 - messageWidth / 2 + xOffset;
+            positionY = image.bitmap.height / 2 - messageHeight / 2 + yOffset;
             break;
     
-        case screen_positions.MiddleRight:
-            positionX = image.bitmap.width - messageWidth;
-            positionY = image.bitmap.height / 2 - messageHeight / 2;
+        case screen_positions.RightMiddle:
+            positionX = image.bitmap.width - messageWidth - margin + xOffset;
+            positionY = image.bitmap.height / 2 - messageHeight / 2 + yOffset;
             break;
 
-        case screen_positions.BottomLeft:
-            positionX = 0;
-            positionY = image.bitmap.height - messageHeight;
+        case screen_positions.LeftBottom:
+            positionX = 0 + margin + xOffset;
+            positionY = image.bitmap.height - messageHeight - margin + yOffset;
             break;
     
-        case screen_positions.BottomMiddle:
-            positionX = image.bitmap.width / 2 - messageWidth / 2;
-            positionY = image.bitmap.height - messageHeight;
+        case screen_positions.MiddleBottom:
+            positionX = image.bitmap.width / 2 - messageWidth / 2 + xOffset;
+            positionY = image.bitmap.height - messageHeight - margin + yOffset;
             break;
     
-        case screen_positions.BottomRight:
-            positionX = image.bitmap.width - messageWidth;
-            positionY = image.bitmap.height - messageHeight;
+        case screen_positions.RightBottom:
+            positionX = image.bitmap.width - messageWidth - margin + xOffset;
+            positionY = image.bitmap.height - messageHeight - margin + yOffset;
             break;
     
         default:
@@ -88,7 +90,7 @@ function printTextAtPosition(font, text, image, position) {
         {
             text: text
         },
-        image.bitmap.width,
+        maxWidth,
         image.bitmap.height
     );
 

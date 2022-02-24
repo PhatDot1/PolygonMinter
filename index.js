@@ -27,7 +27,7 @@ const pinata = pinataSDK(process.env.PINATA_KEY, process.env.PINATA_SECRET);
 
 var isRunning = false;
 
-cron.schedule('*/30 * * * * *', async () => {
+cron.schedule('*/10 * * * * *', async () => {
 
     console.log('Running a task every X seconds');
 
@@ -48,7 +48,7 @@ cron.schedule('*/30 * * * * *', async () => {
 
             const readableStreamForFile = fs.createReadStream(fileNameOfNFTImage);
             var ipfsHashImage = (await pinata.pinFileToIPFS(readableStreamForFile)).IpfsHash;
-
+            
             fs.unlinkSync(fileNameOfNFTImage);
 
             var jsonBody = await utils.createJsonforData(indexOfNFTToMint, objectToMint, ipfsHashImage);
@@ -72,7 +72,7 @@ cron.schedule('*/30 * * * * *', async () => {
 
             //Email is fire and forget (you don't need to wait for the task to finish);
             mailer.emailUserAfterMint(objectToMint.email, etherscanLinkToTx);
-                
+             
         }
 
         console.log("Done");
@@ -85,6 +85,8 @@ cron.schedule('*/30 * * * * *', async () => {
 //Napravi Opeansea link - probably need to create a collection
 //Napravi open tracking za email
 //Napravi link tracking za email - awstrack.me
+//How to add image to email?
+//How to extract html from gmail (drafts )
 
 //Clean up import to module files + put them in the helpers directory (including enums.js)
 
