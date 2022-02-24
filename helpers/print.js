@@ -1,5 +1,5 @@
 import jimp from 'jimp';
-import screen_positions from './assets/enums.js';
+import screen_positions from './enums.js';
 
 var createImageForData = async (indexOfNFTToMint, objectToMint) => {
 

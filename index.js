@@ -7,10 +7,10 @@ import pinataSDK from '@pinata/sdk';
 
 import fs from 'fs';
 
-import table from './table.js';
-import print from './print.js';
-import utils from './utils.js';
-import mailer from './mailer.js'
+import table from './helpers/table.js';
+import print from './helpers/print.js';
+import utils from './helpers/utils.js';
+import mailer from './helpers/mailer.js'
 
 const provider = new ethers.providers.InfuraProvider(process.env.NETWORK, process.env.INFURA_PROJECT_ID);
 const wallet = new ethers.Wallet(process.env.DEPLOYER_KEY, provider);
@@ -37,42 +37,11 @@ cron.schedule('*/10 * * * * *', async () => {
         var mintableObjects = await table.fetchFromBase();
 
         for (let index = 0; index < mintableObjects.length; index++) {
-            console.log('start');
+
             const objectToMint = mintableObjects[index];
 
-            await table.writeToBase(objectToMint, "Pending");
+            await mintNFT(objectToMint);
 
-            var indexOfNFTToMint = (await nftContract.totalSupply()).toNumber();
-
-            var fileNameOfNFTImage = await print.createImageForData(indexOfNFTToMint, objectToMint);
-
-            const readableStreamForFile = fs.createReadStream(fileNameOfNFTImage);
-            var ipfsHashImage = (await pinata.pinFileToIPFS(readableStreamForFile)).IpfsHash;
-            
-            fs.unlinkSync(fileNameOfNFTImage);
-
-            var jsonBody = await utils.createJsonforData(indexOfNFTToMint, objectToMint, ipfsHashImage);
-            const options = {pinataMetadata: {name: `Encode Certificate #${indexOfNFTToMint}`}};
-            var ipfsHashJson = (await pinata.pinJSONToIPFS(jsonBody, options)).IpfsHash;
-
-            let transactionResponse = await nftContract.safeMint(objectToMint.ethAddress, `https://gateway.pinata.cloud/ipfs/${ipfsHashJson}`);
-            var transcationReceipt = await transactionResponse.wait();
-
-            var indexOfNFT = parseInt(transcationReceipt.logs[0].topics[3], 16);
-            var transactionHash = transcationReceipt.logs[0].transactionHash;
-
-            var newStatus = "Success";
-            var etherscanLinkToTx = `${process.env.ETHERSCAN_DOMAIN}/tx/${transactionHash}`;
-
-            if (indexOfNFT != indexOfNFTToMint) {
-                newStatus = "Error";
-            }
-
-            await table.writeToBase(objectToMint, newStatus, indexOfNFT, etherscanLinkToTx);
-
-            //Email is fire and forget (you don't need to wait for the task to finish);
-            mailer.emailUserAfterMint(objectToMint.email, etherscanLinkToTx);
-             
         }
 
         console.log("Done");
@@ -81,8 +50,49 @@ cron.schedule('*/10 * * * * *', async () => {
 
 });
 
+async function mintNFT (objectToMint) {
+
+    await table.writeToBase(objectToMint, "Pending");
+
+    var indexOfNFTToMint = (await nftContract.totalSupply()).toNumber();
+
+    var fileNameOfNFTImage = await print.createImageForData(indexOfNFTToMint, objectToMint);
+
+    const readableStreamForFile = fs.createReadStream(fileNameOfNFTImage);
+    var ipfsHashImage = (await pinata.pinFileToIPFS(readableStreamForFile)).IpfsHash;
+            
+    fs.unlinkSync(fileNameOfNFTImage);
+
+    var jsonBody = await utils.createJsonforData(indexOfNFTToMint, objectToMint, ipfsHashImage);
+    const options = {pinataMetadata: {name: `Encode Certificate #${indexOfNFTToMint}`}};
+    var ipfsHashJson = (await pinata.pinJSONToIPFS(jsonBody, options)).IpfsHash;
+
+    let transactionResponse = await nftContract.safeMint(objectToMint.ethAddress, `https://gateway.pinata.cloud/ipfs/${ipfsHashJson}`);
+    var transcationReceipt = await transactionResponse.wait();
+
+    var indexOfNFT = parseInt(transcationReceipt.logs[0].topics[3], 16);
+    var transactionHash = transcationReceipt.logs[0].transactionHash;
+
+    var newStatus = "Success";
+    var etherscanLinkToTx = `${process.env.ETHERSCAN_DOMAIN}/tx/${transactionHash}`;
+
+    if (indexOfNFT != indexOfNFTToMint) {
+        newStatus = "Error";
+    }
+
+    await table.writeToBase(objectToMint, newStatus, indexOfNFT, etherscanLinkToTx);
+
+    if (newStatus == "Success") {
+
+        //Email is fire and forget (you don't need to wait for the task to finish);
+        mailer.emailUserAfterMint(objectToMint.email, etherscanLinkToTx);
+
+    }
+
+}
+
 // Napravi template mail-a (pogledaj buildspace)
-//Napravi Opeansea link - probably need to create a collection
+//Napravi Opeansea link - probably need to create a collection - https://docs.opensea.io/docs/5-create-your-storefront - Need Rinkeby testnet
 //Napravi open tracking za email
 //Napravi link tracking za email - awstrack.me
 //How to add image to email?
