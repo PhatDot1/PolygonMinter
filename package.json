@@ -7,6 +7,9 @@
     "start": "node index.js"
   },
   "type": "module",
+  "engines" : { 
+    "node" : ">=16.0.0 <=17.5.0"
+  },
   "author": "Robert Jurvanen <robert.jurvanen@gmail.com>",
   "license": "MIT",
   "dependencies": {

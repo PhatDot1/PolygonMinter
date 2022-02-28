@@ -1,4 +1,3 @@
-
 import 'dotenv/config'
 import cron from 'node-cron';
 import ethers from 'ethers';
