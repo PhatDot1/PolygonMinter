@@ -5,6 +5,8 @@ const emailRegexp = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-
 var accessToken;
 var accessTokenExpiry;
 
+console.log(process.env.EMAIL_PRIVATE_KEY.replace(/\\n/g, "\n"));
+
 let transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 465,
@@ -12,7 +14,7 @@ let transporter = nodemailer.createTransport({
     auth: {
         type: 'OAuth2',
         serviceClient: process.env.EMAIL_SERVICE_CLIENT,
-        privateKey: process.env.EMAIL_PRIVATE_KEY,
+        privateKey: process.env.EMAIL_PRIVATE_KEY.replace(/\\n/g, "\n"),
     }
 });
 
