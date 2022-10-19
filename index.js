@@ -1,17 +1,20 @@
-import 'dotenv/config'
-import cron from 'node-cron';
-import ethers from 'ethers';
-import nodeFetch from 'node-fetch';
-import pinataSDK from '@pinata/sdk';
+import "dotenv/config";
+import cron from "node-cron";
+import ethers, { BigNumber } from "ethers";
+import nodeFetch from "node-fetch";
+import pinataSDK from "@pinata/sdk";
 
-import fs from 'fs';
+import fs from "fs";
 
-import table from './helpers/table.js';
-import print from './helpers/print.js';
-import utils from './helpers/utils.js';
-import mailer from './helpers/mailer.js'
+import table from "./helpers/table.js";
+import print from "./helpers/print.js";
+import utils from "./helpers/utils.js";
+import mailer from "./helpers/mailer.js";
 
-const provider = new ethers.providers.InfuraProvider(process.env.NETWORK, process.env.INFURA_PROJECT_ID);
+const provider = new ethers.providers.InfuraProvider(
+  process.env.NETWORK,
+  process.env.INFURA_PROJECT_ID
+);
 const wallet = new ethers.Wallet(process.env.DEPLOYER_KEY, provider);
 const signer = wallet.connect(provider);
 
@@ -19,75 +22,107 @@ const etherscanUrl = `${process.env.ETHERSCAN_ENDPOINT}/api?module=contract&acti
 const etherscanResponse = await nodeFetch(etherscanUrl);
 
 const abiForContract = (await etherscanResponse.json()).result;
-const nftContract = new ethers.Contract(process.env.NFT_CONTRACT_ADDRESS, abiForContract, signer);
+
+const nftContract = new ethers.Contract(
+  process.env.NFT_CONTRACT_ADDRESS,
+  abiForContract,
+  signer
+);
 
 const pinata = pinataSDK(process.env.PINATA_KEY, process.env.PINATA_SECRET);
 
 var isRunning = false;
 
-cron.schedule('*/10 * * * * *', async () => {
+cron.schedule("*/1 * * * * *", async () => {
+  console.log("Running a task every X seconds");
 
-    console.log('Running a task every X seconds');
+  if (isRunning === false) {
+    isRunning = true;
 
-    if (isRunning === false) {
-        isRunning = true;
+    var mintableObjects = await table.fetchFromBase();
 
-        var mintableObjects = await table.fetchFromBase();
+    for (let index = 0; index < mintableObjects.length; index++) {
+      console.log("Start minting process");
 
-        for (let index = 0; index < mintableObjects.length; index++) {
+      const objectToMint = mintableObjects[index];
 
-            console.log('Start minting process')
+      await mintNFT(objectToMint);
 
-            const objectToMint = mintableObjects[index];
-
-            await mintNFT(objectToMint);
-
-            console.log('Done with minting process');
-
-        }
-
-        isRunning = false;
+      console.log("Done with minting process");
     }
 
+    isRunning = false;
+  }
 });
 
-async function mintNFT (objectToMint) {
+async function mintNFT(objectToMint) {
+  await table.writeToBase(objectToMint, "Pending");
 
-    await table.writeToBase(objectToMint, "Pending");
+  var indexOfNFTToMint = (await nftContract.totalSupply()).toNumber();
 
-    var indexOfNFTToMint = (await nftContract.totalSupply()).toNumber();
+  var fileNameOfNFTImage = await print.createImageForData(
+    indexOfNFTToMint,
+    objectToMint
+  );
 
-    var fileNameOfNFTImage = await print.createImageForData(indexOfNFTToMint, objectToMint);
+  const readableStreamForFile = fs.createReadStream(fileNameOfNFTImage);
+  var ipfsHashImage = (await pinata.pinFileToIPFS(readableStreamForFile))
+    .IpfsHash;
+  fs.unlinkSync(fileNameOfNFTImage);
 
-    const readableStreamForFile = fs.createReadStream(fileNameOfNFTImage);
-    var ipfsHashImage = (await pinata.pinFileToIPFS(readableStreamForFile)).IpfsHash; 
-    fs.unlinkSync(fileNameOfNFTImage);
+  var jsonBody = await utils.createJsonforData(
+    indexOfNFTToMint,
+    objectToMint,
+    ipfsHashImage
+  );
+  const options = {
+    pinataMetadata: { name: `Encode Certificate #${indexOfNFTToMint}` },
+  };
+  var ipfsHashJson = (await pinata.pinJSONToIPFS(jsonBody, options)).IpfsHash;
 
-    var jsonBody = await utils.createJsonforData(indexOfNFTToMint, objectToMint, ipfsHashImage);
-    const options = {pinataMetadata: {name: `Encode Certificate #${indexOfNFTToMint}`}};
-    var ipfsHashJson = (await pinata.pinJSONToIPFS(jsonBody, options)).IpfsHash;
+  const gasResponse = await nodeFetch(
+    "https://gasstation-mainnet.matic.network/v2"
+  );
 
-    let transactionResponse = await nftContract.safeMint(objectToMint.ethAddress, `https://gateway.pinata.cloud/ipfs/${ipfsHashJson}`);
-    var transcationReceipt = await transactionResponse.wait();
+  var maxFee = (await gasResponse.json()).fast.maxFee;
+  var maxFeeBigNumber = ethers.utils.parseUnits(Math.ceil(maxFee) + "", "gwei");
 
-    var indexOfNFT = parseInt(transcationReceipt.logs[0].topics[3], 16);
-    var transactionHash = transcationReceipt.logs[0].transactionHash;
+  let transactionResponse = await nftContract.safeMint(
+    objectToMint.ethAddress,
+    `https://gateway.pinata.cloud/ipfs/${ipfsHashJson}`,
+    { gasPrice: maxFeeBigNumber }
+  );
+  console.log(transactionResponse);
+  var transcationReceipt = await transactionResponse.wait();
+  console.log(transcationReceipt);
 
-    var newStatus = "Success";
-    var etherscanLinkToTx = `${process.env.ETHERSCAN_DOMAIN}/tx/${transactionHash}`;
+  var indexOfNFT = parseInt(transcationReceipt.logs[0].topics[3], 16);
+  var transactionHash = transcationReceipt.logs[0].transactionHash;
 
-    if (indexOfNFT != indexOfNFTToMint) {
-        newStatus = "Error";
-    }
+  var newStatus = "Success";
+  var etherscanLinkToTx = `${process.env.ETHERSCAN_DOMAIN}/tx/${transactionHash}`;
 
-    await table.writeToBase(objectToMint, newStatus, indexOfNFT, etherscanLinkToTx);
+  if (indexOfNFT != indexOfNFTToMint) {
+    newStatus = "Error";
+  }
 
-    if (newStatus == "Success") {
+  await table.writeToBase(
+    objectToMint,
+    newStatus,
+    indexOfNFT,
+    etherscanLinkToTx
+  );
 
-        //Email is fire and forget (you don't need to wait for the task to finish);
-        mailer.emailUserAfterMint(objectToMint.email, objectToMint.programmeName, objectToMint.name, objectToMint.programmeType, indexOfNFT, etherscanLinkToTx, objectToMint.ethAddress);
-
-    }
-
+  if (newStatus == "Success") {
+    //Email is fire and forget (you don't need to wait for the task to finish);
+    mailer.emailUserAfterMint(
+      objectToMint.email,
+      objectToMint.programmeName,
+      objectToMint.name,
+      objectToMint.programmeType,
+      indexOfNFT,
+      etherscanLinkToTx,
+      objectToMint.ethAddress
+    );
+  }
 }
-
