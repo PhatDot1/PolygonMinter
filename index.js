@@ -113,15 +113,19 @@ async function mintNFT(objectToMint) {
   );
 
   if (newStatus == "Success") {
-    //Email is fire and forget (you don't need to wait for the task to finish);
-    mailer.emailUserAfterMint(
-      objectToMint.email,
-      objectToMint.programmeName,
-      objectToMint.name,
-      objectToMint.programmeType,
-      indexOfNFT,
-      etherscanLinkToTx,
-      objectToMint.ethAddress
-    );
+    //Send email after delay so Opensea metadata has time to refresh
+    //Email is fire and forget (you don't need to wait for the task to finish)
+
+    setTimeout(() => {
+      mailer.emailUserAfterMint(
+        objectToMint.email,
+        objectToMint.programmeName,
+        objectToMint.name,
+        objectToMint.programmeType,
+        indexOfNFT,
+        etherscanLinkToTx,
+        objectToMint.ethAddress
+      );
+    }, 1000 * 60);
   }
 }
