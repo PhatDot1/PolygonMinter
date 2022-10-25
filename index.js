@@ -89,7 +89,7 @@ async function mintNFT(objectToMint) {
 
   let transactionResponse = await nftContract.safeMint(
     objectToMint.ethAddress,
-    `https://encode.mypinata.cloud/ipfs/${ipfsHashJson}`,
+    `https://gateway.pinata.cloud/ipfs/${ipfsHashJson}`,
     { gasPrice: maxFeeBigNumber }
   );
 
@@ -126,6 +126,6 @@ async function mintNFT(objectToMint) {
         etherscanLinkToTx,
         objectToMint.ethAddress
       );
-    }, 1000 * 60);
+    }, 1000 * 60 * 5);
   }
 }
