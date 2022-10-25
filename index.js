@@ -113,6 +113,11 @@ async function mintNFT(objectToMint) {
   );
 
   if (newStatus == "Success") {
+    //Force update of Opensea metadata (fire and forget)
+
+    var openseaUrl = `${process.env.OPENSEA_DOMAIN}/${process.env.NFT_CONTRACT_ADDRESS}/${indexOfNFT}/?force_update=true`;
+    const gasResponse = await nodeFetch(openseaUrl);
+
     //Email is fire and forget (you don't need to wait for the task to finish);
     mailer.emailUserAfterMint(
       objectToMint.email,
