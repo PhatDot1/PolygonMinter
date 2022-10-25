@@ -89,12 +89,11 @@ async function mintNFT(objectToMint) {
 
   let transactionResponse = await nftContract.safeMint(
     objectToMint.ethAddress,
-    `https://gateway.pinata.cloud/ipfs/${ipfsHashJson}`,
+    `https://encode.mypinata.cloud/ipfs/${ipfsHashJson}`,
     { gasPrice: maxFeeBigNumber }
   );
-  console.log(transactionResponse);
+
   var transcationReceipt = await transactionResponse.wait();
-  console.log(transcationReceipt);
 
   var indexOfNFT = parseInt(transcationReceipt.logs[0].topics[3], 16);
   var transactionHash = transcationReceipt.logs[0].transactionHash;
