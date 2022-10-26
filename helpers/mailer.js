@@ -6,7 +6,7 @@ const emailRegexp =
 var accessToken;
 var accessTokenExpiry;
 
-console.log(process.env.EMAIL_PRIVATE_KEY.replace(/\\n/g, "\n"));
+// console.log(process.env.EMAIL_PRIVATE_KEY.replace(/\\n/g, "\n"));
 
 let transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
@@ -20,10 +20,10 @@ let transporter = nodemailer.createTransport({
 });
 
 transporter.on("token", (token) => {
-  console.log("A new access token was generated");
-  console.log("User: %s", token.user);
-  console.log("Access Token: %s", token.accessToken);
-  console.log("Expires: %s", new Date(token.expires));
+  //   console.log("A new access token was generated");
+  //   console.log("User: %s", token.user);
+  //   console.log("Access Token: %s", token.accessToken);
+  //   console.log("Expires: %s", new Date(token.expires));
 
   accessToken = token.accessToken;
   accessTokenExpiry = new Date(token.expires);
@@ -41,14 +41,14 @@ var emailUserAfterMint = async (
   ethAddress
 ) => {
   if (emailRegexp.test(toEmailAddress)) {
-    console.log(toEmailAddress);
+    // console.log(toEmailAddress);
 
-    if (!toEmailAddress.includes("@encode.club")) {
-      console.log(
-        "While in testing mode do not send to emails outside of Encode club"
-      );
-      return;
-    }
+    // if (!toEmailAddress.includes("@encode.club")) {
+    //   console.log(
+    //     "While in testing mode do not send to emails outside of Encode club"
+    //   );
+    //   return;
+    // }
 
     var subjectText = `Your NFT for ${programmeName}`;
 
@@ -82,11 +82,11 @@ var emailUserAfterMint = async (
         expires: accessTokenExpiry,
       },
     });
+    return "Email Success";
   } else {
-    console.log("Error - Email address not valid");
+    // console.log("Error - Email address not valid");
+    return "Email Error";
   }
-
-  return;
 };
 
 var mailer = {

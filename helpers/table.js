@@ -26,6 +26,15 @@ var writeToBase = async (
         },
       },
     ];
+  } else if (newStatus == "Email Success" || newStatus == "Email Error") {
+    updateArray = [
+      {
+        id: objectToMint.recordId,
+        fields: {
+          "Email Status": newStatus,
+        },
+      },
+    ];
   } else {
     updateArray = [
       {
