@@ -135,6 +135,8 @@ async function mintNFT(objectToMint) {
     //Send email after delay so Opensea metadata has time to refresh - 15mins
 
     setTimeout(() => {
+      console.log("Send Email");
+
       mailer
         .emailUserAfterMint(
           objectToMint.email,
@@ -146,6 +148,8 @@ async function mintNFT(objectToMint) {
           objectToMint.ethAddress
         )
         .then(function (result) {
+          console.log("Update Email Status", result);
+
           table.writeToBase(
             objectToMint,
             result,
@@ -153,6 +157,6 @@ async function mintNFT(objectToMint) {
             etherscanLinkToTx
           );
         });
-    }, 1000 * 60 * 15);
+    }, 1000 * 60 * 1);
   }
 }
