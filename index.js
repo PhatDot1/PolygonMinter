@@ -46,9 +46,10 @@ cron.schedule("*/1 * * * * *", async () => {
 
       const objectToMint = mintableObjects[index];
 
-      await mintNFT(objectToMint);
+      await table.writeToBase(objectToMint, "Pending");
 
-      console.log("Done with minting process");
+      setTimeout(() => {await mintNFT(objectToMint);}, 1000 * 30);
+
     }
 
     isRunning = false;
@@ -56,8 +57,6 @@ cron.schedule("*/1 * * * * *", async () => {
 });
 
 async function mintNFT(objectToMint) {
-  await table.writeToBase(objectToMint, "Pending");
-
   var indexOfNFTToMint = (await nftContract.totalSupply()).toNumber();
 
   var fileNameOfNFTImage = await print.createImageForData(
@@ -101,6 +100,8 @@ async function mintNFT(objectToMint) {
   var newStatus = "Success";
   var etherscanLinkToTx = `${process.env.ETHERSCAN_DOMAIN}/tx/${transactionHash}`;
 
+  console.log("Done with minting process", etherscanLinkToTx);
+
   if (indexOfNFT != indexOfNFTToMint) {
     newStatus = "Error";
   }
@@ -126,6 +127,6 @@ async function mintNFT(objectToMint) {
         etherscanLinkToTx,
         objectToMint.ethAddress
       );
-    }, 1000 * 60 * 5);
+    }, 1000 * 60 * 15);
   }
 }
