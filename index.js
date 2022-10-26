@@ -33,6 +33,10 @@ const pinata = pinataSDK(process.env.PINATA_KEY, process.env.PINATA_SECRET);
 
 var isRunning = false;
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 cron.schedule("*/1 * * * * *", async () => {
   console.log("Running a task every X seconds");
 
@@ -48,8 +52,9 @@ cron.schedule("*/1 * * * * *", async () => {
 
       await table.writeToBase(objectToMint, "Pending");
 
-      setTimeout(() => {await mintNFT(objectToMint);}, 1000 * 30);
+      await sleep(1000 * 30);
 
+      await mintNFT(objectToMint);
     }
 
     isRunning = false;
