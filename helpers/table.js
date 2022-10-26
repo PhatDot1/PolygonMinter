@@ -68,7 +68,7 @@ var fetchFromBase = async () => {
           recordId: record.id,
           name: record.get("Name (from ☃️ People)")[0],
           email: record.get("Email (from ☃️ People)")[0],
-          ethAddress: record.get("ETH address (from ☃️ People)")[0],
+          ethAddress: record.get("ETH address (from ☃️ People)"),
           programmeName: record.get("Programme name (from 📺 Programmes)")[0],
           programmeType: record.get("Type (from 📺 Programmes)")[0],
           certImage: record.get("Certificate image (from 📺 Programmes)")[0]

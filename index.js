@@ -38,7 +38,7 @@ function sleep(ms) {
 }
 
 cron.schedule("*/1 * * * * *", async () => {
-  console.log("Running a task every X seconds");
+  //console.log("Running a task every X seconds");
 
   if (isRunning === false) {
     isRunning = true;
@@ -55,6 +55,8 @@ cron.schedule("*/1 * * * * *", async () => {
       await sleep(1000 * 30);
 
       await mintNFT(objectToMint);
+
+      console.log("Done with minting process");
     }
 
     isRunning = false;
@@ -62,12 +64,17 @@ cron.schedule("*/1 * * * * *", async () => {
 });
 
 async function mintNFT(objectToMint) {
+  console.log(objectToMint);
   var indexOfNFTToMint = (await nftContract.totalSupply()).toNumber();
+
+  console.log(indexOfNFTToMint);
 
   var fileNameOfNFTImage = await print.createImageForData(
     indexOfNFTToMint,
     objectToMint
   );
+
+  console.log(fileNameOfNFTImage);
 
   const readableStreamForFile = fs.createReadStream(fileNameOfNFTImage);
   var ipfsHashImage = (await pinata.pinFileToIPFS(readableStreamForFile))
@@ -84,6 +91,8 @@ async function mintNFT(objectToMint) {
   };
   var ipfsHashJson = (await pinata.pinJSONToIPFS(jsonBody, options)).IpfsHash;
 
+  console.log(ipfsHashJson);
+
   const gasResponse = await nodeFetch(
     "https://gasstation-mainnet.matic.network/v2"
   );
@@ -97,15 +106,19 @@ async function mintNFT(objectToMint) {
     { gasPrice: maxFeeBigNumber }
   );
 
+  console.log(transactionResponse);
+
   var transcationReceipt = await transactionResponse.wait();
 
   var indexOfNFT = parseInt(transcationReceipt.logs[0].topics[3], 16);
   var transactionHash = transcationReceipt.logs[0].transactionHash;
 
+  console.log(transactionHash);
+
   var newStatus = "Success";
   var etherscanLinkToTx = `${process.env.ETHERSCAN_DOMAIN}/tx/${transactionHash}`;
 
-  console.log("Done with minting process", etherscanLinkToTx);
+  console.log(etherscanLinkToTx);
 
   if (indexOfNFT != indexOfNFTToMint) {
     newStatus = "Error";
