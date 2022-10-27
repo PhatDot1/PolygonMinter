@@ -64,10 +64,13 @@ var fetchFromBase = async () => {
       // This function (`page`) will get called for each page of records.
 
       records.forEach(function (record) {
+        var emails = record.get("Email (from ☃️ People)")[0];
+        var emailArray = emails.split(",");
+
         var objectToMint = {
           recordId: record.id,
           name: record.get("Name (from ☃️ People)")[0],
-          email: record.get("Email (from ☃️ People)")[0],
+          email: emailArray[0],
           ethAddress: record.get("ETH address (from ☃️ People)"),
           programmeName: record.get("Programme name (from 📺 Programmes)")[0],
           programmeType: record.get("Type (from 📺 Programmes)")[0],

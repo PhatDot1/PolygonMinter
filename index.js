@@ -157,6 +157,6 @@ async function mintNFT(objectToMint) {
             etherscanLinkToTx
           );
         });
-    }, 1000 * 60 * 1);
+    }, 1000 * 60 * 5);
   }
 }
