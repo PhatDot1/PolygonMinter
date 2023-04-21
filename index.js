@@ -71,17 +71,17 @@ cron.schedule("*/10 * * * * *", async () => {
 });
 
 async function mintNFT(objectToMint) {
-  console.log(objectToMint);
+  console.log("objectToMint: ", objectToMint);
   var indexOfNFTToMint = (await nftContract.totalSupply()).toNumber();
 
-  console.log(indexOfNFTToMint);
+  console.log("indexOfNFTToMint: ", indexOfNFTToMint);
 
   var fileNameOfNFTImage = await print.createImageForData(
     indexOfNFTToMint,
     objectToMint
   );
 
-  console.log(fileNameOfNFTImage);
+  console.log("fileNameOfNFTImage: ", fileNameOfNFTImage);
 
   const readableStreamForFile = fs.createReadStream(fileNameOfNFTImage);
   var ipfsHashImage = (await pinata.pinFileToIPFS(readableStreamForFile))
@@ -98,18 +98,18 @@ async function mintNFT(objectToMint) {
   };
   var ipfsHashJson = (await pinata.pinJSONToIPFS(jsonBody, options)).IpfsHash;
 
-  console.log(ipfsHashJson);
+  console.log("ipfsHashJson: ", ipfsHashJson);
 
   const gasResponse = await nodeFetch(
     "https://gasstation-mainnet.matic.network/v2"
   );
 
-  console.log(gasResponse);
+  console.log("gasResponse: ", gasResponse);
 
   var maxFee = (await gasResponse.json()).fast.maxFee;
   var maxFeeBigNumber = ethers.utils.parseUnits(Math.ceil(maxFee) + "", "gwei");
 
-  console.log(maxFee, maxFeeBigNumber);
+  console.log("maxFeeBigNumber: ", maxFeeBigNumber);
 
   let transactionResponse = await nftContract.safeMint(
     objectToMint.ethAddress,
@@ -117,19 +117,19 @@ async function mintNFT(objectToMint) {
     { gasPrice: maxFeeBigNumber }
   );
 
-  console.log(transactionResponse);
+  console.log("transactionResponse: ", transactionResponse);
 
   var transcationReceipt = await transactionResponse.wait();
 
   var indexOfNFT = parseInt(transcationReceipt.logs[0].topics[3], 16);
   var transactionHash = transcationReceipt.logs[0].transactionHash;
 
-  console.log(transactionHash);
+  console.log("transactionHash", transactionHash);
 
   var newStatus = "Success";
   var etherscanLinkToTx = `${process.env.ETHERSCAN_DOMAIN}/tx/${transactionHash}`;
 
-  console.log(etherscanLinkToTx);
+  console.log("etherscanLinkToTx: ", etherscanLinkToTx);
 
   if (indexOfNFT != indexOfNFTToMint) {
     newStatus = "Error";
@@ -159,7 +159,7 @@ async function mintNFT(objectToMint) {
           objectToMint.ethAddress
         )
         .then(function (result) {
-          console.log("Update Email Status", result);
+          console.log("Update Email Status: ", result);
 
           table.writeToBase(
             objectToMint,
