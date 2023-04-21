@@ -109,13 +109,23 @@ async function mintNFT(objectToMint) {
   var maxFee = (await gasResponse.json()).fast.maxFee;
   var maxFeeBigNumber = ethers.utils.parseUnits(Math.ceil(maxFee) + "", "gwei");
 
+  console.log("maxFee: ", maxFee);
   console.log("maxFeeBigNumber: ", maxFeeBigNumber);
 
-  let transactionResponse = await nftContract.safeMint(
-    objectToMint.ethAddress,
-    `https://gateway.pinata.cloud/ipfs/${ipfsHashJson}`,
-    { gasPrice: maxFeeBigNumber }
-  );
+  let transactionResponse;
+
+  try {
+    transactionResponse = await nftContract.safeMint(
+      objectToMint.ethAddress,
+      `https://gateway.pinata.cloud/ipfs/${ipfsHashJson}`,
+      { gasPrice: maxFeeBigNumber }
+    );
+  } catch (error) {
+    console.error("An error occurred during the safeMint process:", error);
+
+    await table.writeToBase(objectToMint, "Error");
+    return;
+  }
 
   console.log("transactionResponse: ", transactionResponse);
 
