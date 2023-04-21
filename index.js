@@ -1,3 +1,4 @@
+// Import necessary modules
 import "dotenv/config";
 import cron from "node-cron";
 import ethers, { BigNumber } from "ethers";
@@ -11,6 +12,7 @@ import print from "./helpers/print.js";
 import utils from "./helpers/utils.js";
 import mailer from "./helpers/mailer.js";
 
+// Set up provider, wallet, and signer using Infura
 const provider = new ethers.providers.InfuraProvider(
   process.env.NETWORK,
   process.env.INFURA_PROJECT_ID
@@ -18,27 +20,32 @@ const provider = new ethers.providers.InfuraProvider(
 const wallet = new ethers.Wallet(process.env.DEPLOYER_KEY, provider);
 const signer = wallet.connect(provider);
 
+// Fetch the ABI for the NFT contract
 const etherscanUrl = `${process.env.ETHERSCAN_ENDPOINT}/api?module=contract&action=getabi&address=${process.env.NFT_CONTRACT_ADDRESS}&apikey=${process.env.ETHERSCAN_KEY}`;
 const etherscanResponse = await nodeFetch(etherscanUrl);
-
 const abiForContract = (await etherscanResponse.json()).result;
 
+// Create an instance of the NFT contract
 const nftContract = new ethers.Contract(
   process.env.NFT_CONTRACT_ADDRESS,
   abiForContract,
   signer
 );
 
+// Create an instance of the Pinata SDK
 const pinata = pinataSDK(process.env.PINATA_KEY, process.env.PINATA_SECRET);
 
+// Set a flag to track whether the minting process is already running
 var isRunning = false;
 
+// Define a function to pause execution for a given number of milliseconds
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-cron.schedule("*/1 * * * * *", async () => {
-  //console.log("Running a task every X seconds");
+// Schedule a cron job to run every 10 seconds
+cron.schedule("*/10 * * * * *", async () => {
+  //console.log("Running a task every 10 seconds");
 
   if (isRunning === false) {
     isRunning = true;
@@ -132,7 +139,7 @@ async function mintNFT(objectToMint) {
   );
 
   if (newStatus == "Success") {
-    //Send email after delay so Opensea metadata has time to refresh - 15mins
+    //Send email after delay so Opensea metadata has time to refresh - 5mins
 
     setTimeout(() => {
       console.log("Send Email");

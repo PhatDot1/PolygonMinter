@@ -53,7 +53,7 @@ var fetchFromBase = async () => {
   var mintableObjects = [];
 
   var filterFormula =
-    "AND(({Certificate Status} = 'Ready'), ({Certificate ID} = ''), ({Link to NFT} = ''), (NOT({ETH address (from ☃️ People)}) = ''))";
+    "AND(({Certificate Status} = 'Ready'), ({Certificate ID} = ''), ({Link to NFT} = ''), (NOT({ETH address (from ☃️ People)}) = ''), (NOT({Email (from ☃️ People)}) = ''))";
 
   await base("📜 Certificates")
     .select({
