@@ -104,8 +104,12 @@ async function mintNFT(objectToMint) {
     "https://gasstation-mainnet.matic.network/v2"
   );
 
+  console.log(gasResponse);
+
   var maxFee = (await gasResponse.json()).fast.maxFee;
   var maxFeeBigNumber = ethers.utils.parseUnits(Math.ceil(maxFee) + "", "gwei");
+
+  console.log(maxFee, maxFeeBigNumber);
 
   let transactionResponse = await nftContract.safeMint(
     objectToMint.ethAddress,
