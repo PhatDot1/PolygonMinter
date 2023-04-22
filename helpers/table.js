@@ -53,7 +53,7 @@ var fetchFromBase = async () => {
   var mintableObjects = [];
 
   var filterFormula =
-    "AND(({Certificate Status} = 'Ready'), ({Certificate ID} = ''), ({Link to NFT} = ''), (NOT({ETH address (from ☃️ People)}) = ''), (NOT({Email (from ☃️ People)}) = ''))";
+    "AND(({Certificate Status} = 'Ready'), ({Certificate ID} = ''), ({Link to NFT} = ''))";
 
   await base("📜 Certificates")
     .select({
@@ -64,22 +64,40 @@ var fetchFromBase = async () => {
       // This function (`page`) will get called for each page of records.
 
       records.forEach(function (record) {
-        var emails = record.get("Email (from ☃️ People)")[0];
-        var emailArray = emails.split(",");
+        if (
+          record.get("Email (from ☃️ People)") == null ||
+          record.get("ETH address (from ☃️ People)") == null
+        ) {
+          console.log("One of the values is null or undefined");
 
-        var objectToMint = {
-          recordId: record.id,
-          name: record.get("Name (from ☃️ People)")[0],
-          email: emailArray[0],
-          ethAddress: record.get("ETH address (from ☃️ People)"),
-          programmeName: record.get("Programme name (from 📺 Programmes)")[0],
-          programmeType: record.get("Type (from 📺 Programmes)")[0],
-          certImage: record.get("Certificate image (from 📺 Programmes)")[0]
-            .url,
-          achievementLevel: record.get("Achievement level"),
-        };
+          base("📜 Certificates")
+            .update([
+              {
+                id: record.id,
+                fields: {
+                  "Certificate Status": "Incomplete",
+                },
+              },
+            ])
+            .catch(console.error);
+        } else {
+          var emails = record.get("Email (from ☃️ People)")[0];
+          var emailArray = emails.split(",");
 
-        mintableObjects.push(objectToMint);
+          var objectToMint = {
+            recordId: record.id,
+            name: record.get("Name (from ☃️ People)")[0],
+            email: emailArray[0],
+            ethAddress: record.get("ETH address (from ☃️ People)"),
+            programmeName: record.get("Programme name (from 📺 Programmes)")[0],
+            programmeType: record.get("Type (from 📺 Programmes)")[0],
+            certImage: record.get("Certificate image (from 📺 Programmes)")[0]
+              .url,
+            achievementLevel: record.get("Achievement level"),
+          };
+
+          mintableObjects.push(objectToMint);
+        }
       });
 
       fetchNextPage();

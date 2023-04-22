@@ -132,7 +132,12 @@ async function mintNFT(objectToMint) {
   } catch (error) {
     console.error("An error occurred during the safeMint process:", error);
 
-    await table.writeToBase(objectToMint, "Error");
+    if (error.code === "UNPREDICTABLE_GAS_LIMIT") {
+      // Leave the status to Ready so it will try again once it is done with the rest of the list.
+    } else {
+      await table.writeToBase(objectToMint, "Error");
+    }
+
     return;
   }
 
