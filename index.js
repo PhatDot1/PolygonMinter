@@ -76,10 +76,19 @@ async function mintNFT(objectToMint) {
 
   console.log("indexOfNFTToMint: ", indexOfNFTToMint);
 
-  var fileNameOfNFTImage = await print.createImageForData(
-    indexOfNFTToMint,
-    objectToMint
-  );
+  let fileNameOfNFTImage;
+
+  try {
+    fileNameOfNFTImage = await print.createImageForData(
+      indexOfNFTToMint,
+      objectToMint
+    );
+  } catch (error) {
+    console.error("Error while creating image:", error);
+
+    await table.writeToBase(objectToMint, "Error");
+    return;
+  }
 
   console.log("fileNameOfNFTImage: ", fileNameOfNFTImage);
 
