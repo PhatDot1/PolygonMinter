@@ -134,6 +134,7 @@ async function mintNFT(objectToMint) {
 
     if (error.code === "UNPREDICTABLE_GAS_LIMIT") {
       // Leave the status to Ready so it will try again once it is done with the rest of the list.
+      await table.writeToBase(objectToMint, "Ready");
     } else {
       await table.writeToBase(objectToMint, "Error");
     }
