@@ -59,7 +59,7 @@ cron.schedule("*/10 * * * * *", async () => {
 
       await table.writeToBase(objectToMint, "Pending");
 
-      await sleep(1000 * 30);
+      //await sleep(1000 * 30);
 
       await mintNFT(objectToMint);
 
@@ -142,7 +142,10 @@ async function mintNFT(objectToMint) {
   console.log("gasResponse: ", gasResponse);
 
   var maxFee = (await gasResponse.json()).fast.maxFee;
-  var maxFeeBigNumber = ethers.utils.parseUnits(Math.ceil(maxFee) + "", "gwei");
+  var maxFeeBigNumber = ethers.utils.parseUnits(
+    Math.ceil(maxFee + 50) + "",
+    "gwei"
+  );
 
   console.log("maxFee: ", maxFee);
   console.log("maxFeeBigNumber: ", maxFeeBigNumber);
@@ -160,7 +163,7 @@ async function mintNFT(objectToMint) {
 
     if (error.code === "UNPREDICTABLE_GAS_LIMIT") {
       // Leave the status to Ready so it will try again once it is done with the rest of the list.
-      await table.writeToBase(objectToMint, "Error");
+      await table.writeToBase(objectToMint, "Ready");
     } else {
       await table.writeToBase(objectToMint, "Error");
     }
