@@ -58,6 +58,8 @@ var fetchFromBase = async () => {
   await base("📜 Certificates")
     .select({
       view: "Grid view",
+      pageSize: 50,
+      maxRecords: 100,
       filterByFormula: filterFormula,
     })
     .eachPage(function page(records, fetchNextPage) {
