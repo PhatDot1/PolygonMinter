@@ -93,8 +93,21 @@ async function mintNFT(objectToMint) {
   console.log("fileNameOfNFTImage: ", fileNameOfNFTImage);
 
   const readableStreamForFile = fs.createReadStream(fileNameOfNFTImage);
-  var ipfsHashImage = (await pinata.pinFileToIPFS(readableStreamForFile))
-    .IpfsHash;
+
+  let ipfsHashImage;
+
+  try {
+    ipfsHashImage = (await pinata.pinFileToIPFS(readableStreamForFile))
+      .IpfsHash;
+  } catch (error) {
+    console.error("Error while pinning image to IPFS:", error);
+
+    await table.writeToBase(objectToMint, "Error");
+    return;
+  }
+
+  console.log("ipfsHashImage: ", ipfsHashImage);
+
   fs.unlinkSync(fileNameOfNFTImage);
 
   var jsonBody = await utils.createJsonforData(
@@ -102,10 +115,23 @@ async function mintNFT(objectToMint) {
     objectToMint,
     ipfsHashImage
   );
+
+  console.log("jsonBody: ", jsonBody);
+
   const options = {
     pinataMetadata: { name: `Encode Certificate #${indexOfNFTToMint}` },
   };
-  var ipfsHashJson = (await pinata.pinJSONToIPFS(jsonBody, options)).IpfsHash;
+
+  let ipfsHashJson;
+
+  try {
+    ipfsHashJson = (await pinata.pinJSONToIPFS(jsonBody, options)).IpfsHash;
+  } catch (error) {
+    console.error("Error while pinning JSON to IPFS:", error);
+
+    await table.writeToBase(objectToMint, "Error");
+    return;
+  }
 
   console.log("ipfsHashJson: ", ipfsHashJson);
 
