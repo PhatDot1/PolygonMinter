@@ -59,7 +59,8 @@ cron.schedule("*/10 * * * * *", async () => {
 
       await table.writeToBase(objectToMint, "Pending");
 
-      //await sleep(1000 * 30);
+      //this is here because without it sometimes the call to nftContract.totalSupply() hasn't updated yet with the new total number of NFTs.
+      await sleep(1000 * 30);
 
       await mintNFT(objectToMint);
 
