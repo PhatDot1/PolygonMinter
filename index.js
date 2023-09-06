@@ -136,20 +136,20 @@ async function mintNFT(objectToMint) {
 
   console.log("ipfsHashJson: ", ipfsHashJson);
 
-  const gasResponse = await nodeFetch(
-    "https://gasstation-mainnet.matic.network/v2"
-  );
+  let maxFeeBigNumber;
 
-  console.log("gasResponse: ", gasResponse);
-
-  var maxFee = (await gasResponse.json()).fast.maxFee;
-  var maxFeeBigNumber = ethers.utils.parseUnits(
-    Math.ceil(maxFee + 50) + "",
-    "gwei"
-  );
-
-  console.log("maxFee: ", maxFee);
-  console.log("maxFeeBigNumber: ", maxFeeBigNumber);
+  try {
+    const gasResponse = await nodeFetch("https://gasstation.polygon.technology/v2");
+    console.log("gasResponse:", gasResponse);
+    const maxFee = (await gasResponse.json()).fast.maxFee;
+    maxFeeBigNumber = ethers.utils.parseUnits(Math.ceil(maxFee + 50) + "", "gwei");
+    console.log("maxFee:", maxFee);
+    console.log("maxFeeBigNumber:", maxFeeBigNumber);
+  } catch (error) {
+    console.error("Error fetching or parsing gas data:", error);
+    await table.writeToBase(objectToMint, "Error");
+    return;
+  }
 
   let transactionResponse;
 
