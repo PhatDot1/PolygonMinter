@@ -50,7 +50,7 @@ cron.schedule("*/10 * * * * *", async () => {
   if (isRunning === false) {
     isRunning = true;
 
-    var mintableObjects = await table.fetchFromBase();
+    var { mintable: mintableObjects, emailResend: resendEmailObjects } = await table.fetchFromBase();
 
     for (let index = 0; index < mintableObjects.length; index++) {
       console.log("Start minting process");
@@ -65,6 +65,18 @@ cron.schedule("*/10 * * * * *", async () => {
       await mintNFT(objectToMint);
 
       console.log("Done with minting process");
+    }
+
+    for (let index = 0; index < resendEmailObjects.length; index++) {
+      console.log("Start email resend process");
+
+      const objectToResend = resendEmailObjects[index];
+
+      await table.writeToBase(objectToResend, "Sending Email");
+
+      await sendEmail(objectToResend, objectToResend.indexOfNFT, objectToResend.etherscanLinkToTx);
+
+      console.log("Done with email sending process");
     }
 
     isRunning = false;
@@ -199,30 +211,31 @@ async function mintNFT(objectToMint) {
 
   if (newStatus == "Success") {
     //Send email after delay so Opensea metadata has time to refresh - 5mins
-
     setTimeout(() => {
-      console.log("Send Email");
-
-      mailer
-        .emailUserAfterMint(
-          objectToMint.email,
-          objectToMint.programmeName,
-          objectToMint.name,
-          objectToMint.programmeType,
-          indexOfNFT,
-          etherscanLinkToTx,
-          objectToMint.ethAddress
-        )
-        .then(function (result) {
-          console.log("Update Email Status: ", result);
-
-          table.writeToBase(
-            objectToMint,
-            result,
-            indexOfNFT,
-            etherscanLinkToTx
-          );
-        });
+      sendEmail(objectToMint, indexOfNFT, etherscanLinkToTx);
     }, 1000 * 60 * 5);
+  }
+}
+
+// Function to send email with error handling
+async function sendEmail(objectToMint, indexOfNFT, etherscanLinkToTx) {
+  try {
+    console.log("Send Email");
+
+    const result = await mailer.emailUserAfterMint(
+      objectToMint.email,
+      objectToMint.programmeName,
+      objectToMint.name,
+      objectToMint.programmeType,
+      indexOfNFT,
+      etherscanLinkToTx,
+      objectToMint.ethAddress
+    );
+
+    console.log("Update Email Status: ", result);
+    table.writeToBase(objectToMint, result, indexOfNFT, etherscanLinkToTx);
+  } catch (error) {
+    console.error("Error while sending email: ", error);
+    table.writeToBase(objectToMint, "Email Error");
   }
 }
