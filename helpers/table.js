@@ -83,12 +83,17 @@ var fetchFromBase = async () => {
             ])
             .catch(console.error);
         } else {
-          var emails = record.get("Email (from ☃️ People)")[0];
+
+          var name = record.get("Name (from ☃️ People)");
+          Array.isArray(name) ? name = name[0] : null;
+
+          var emails = record.get("Email (from ☃️ People)");
+          Array.isArray(emails) ? emails = emails[0] : null;
           var emailArray = emails.split(",");
 
           var objectToMint = {
             recordId: record.id,
-            name: record.get("Name (from ☃️ People)")[0],
+            name: name,
             email: emailArray[0],
             ethAddress: record.get("ETH address (from ☃️ People)"),
             programmeName: record.get("Programme name (from 📺 Programmes)")[0],
