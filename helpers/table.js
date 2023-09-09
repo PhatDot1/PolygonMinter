@@ -97,7 +97,11 @@ var fetchFromBase = async () => {
 function processRecord(record, filteredObjects) {
   if (
     record.get("Email (from ☃️ People)") == null ||
-    record.get("ETH address (from ☃️ People)") == null
+    record.get("ETH address (from ☃️ People)") == null ||
+    record.get("Programme name (from 📺 Programmes)") == null ||
+    record.get("Type (from 📺 Programmes)") == null ||
+    record.get("Certificate image (from 📺 Programmes)") == null ||
+    record.get("Achievement level") == null
   ) {
     console.log("One of the values is null or undefined");
 
